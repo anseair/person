@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
+import telran.java2022.person.dao.ChildRepository;
+import telran.java2022.person.dao.EmployeeRepository;
 import telran.java2022.person.dao.PersonRepository;
 import telran.java2022.person.dto.AddressDto;
 import telran.java2022.person.dto.ChildDto;
@@ -29,6 +31,8 @@ public class PersonServiceImpl implements PersonService, CommandLineRunner {
 	
 	final PersonRepository personRepository;
 	final ModelMapper modelMapper;
+	final EmployeeRepository employeeRepository;
+	final ChildRepository childRepository;
 
 	@Override
 	@Transactional
@@ -43,15 +47,15 @@ public class PersonServiceImpl implements PersonService, CommandLineRunner {
 	@Override
 	public PersonDto findPersonById(Integer id) {
 		Person person = personRepository.findById(id).orElseThrow(PersonNotFoundException::new);
-		return modelMapper.map(person, PersonDto.class);
-	}
+		return modelMapper.map(person, getDtoClass(person));
+	}	
 
 	@Override
 	@Transactional
 	public PersonDto removePerson(Integer id) {
 		Person person = personRepository.findById(id).orElseThrow(() -> new PersonNotFoundException());
 		personRepository.delete(person);
-		return modelMapper.map(person, PersonDto.class);
+		return modelMapper.map(person, getDtoClass(person));
 	}
 
 	@Override
@@ -59,7 +63,7 @@ public class PersonServiceImpl implements PersonService, CommandLineRunner {
 	public PersonDto updatePersonName(Integer id, String name) {
 		Person person = personRepository.findById(id).orElseThrow(() -> new PersonNotFoundException());
 		person.setName(name);
-		return modelMapper.map(person, PersonDto.class);
+		return modelMapper.map(person, getDtoClass(person));
 	}
 
 	@Override
@@ -67,14 +71,14 @@ public class PersonServiceImpl implements PersonService, CommandLineRunner {
 	public PersonDto updatePersonAddress(Integer id, AddressDto addressDto) {
 		Person person = personRepository.findById(id).orElseThrow(() -> new PersonNotFoundException());
 		person.setAddress(modelMapper.map(addressDto, Address.class));
-		return modelMapper.map(person, PersonDto.class);
+		return modelMapper.map(person, getDtoClass(person));
 	}
 
 	@Override
 	@Transactional(readOnly = true)
 	public Iterable<PersonDto> findPersonsByCity(String city) {
 		return personRepository.findByAddressCity(city)
-				.map(p -> modelMapper.map(p, PersonDto.class))
+				.map(p -> modelMapper.map(p, getDtoClass(p)))
 				.collect(Collectors.toList());
 	}
 
@@ -82,7 +86,7 @@ public class PersonServiceImpl implements PersonService, CommandLineRunner {
 	@Transactional(readOnly = true)
 	public Iterable<PersonDto> findPersonsByName(String name) {
 		return personRepository.findByName(name)
-				.map(p -> modelMapper.map(p, PersonDto.class))
+				.map(p -> modelMapper.map(p, getDtoClass(p)))
 				.collect(Collectors.toList());
 	}
 
@@ -92,7 +96,7 @@ public class PersonServiceImpl implements PersonService, CommandLineRunner {
 		LocalDate from = LocalDate.now().minusYears(maxAge);
 		LocalDate to = LocalDate.now().minusYears(minAge);
 		return personRepository.findByBirthDateBetween(from, to)
-				.map(p -> modelMapper.map(p, PersonDto.class))
+				.map(p -> modelMapper.map(p, getDtoClass(p)))
 				.collect(Collectors.toList());
 	}
 
@@ -122,21 +126,30 @@ public class PersonServiceImpl implements PersonService, CommandLineRunner {
 		return Person.class;
 	}
 	
+	private Class<? extends PersonDto> getDtoClass(Person person) {
+		if (person instanceof Employee) {
+			return EmployeeDto.class;
+		}
+		if (person instanceof Child) {
+			return ChildDto.class;
+		}
+		return PersonDto.class;
+	}
 	
-	private Class<? extends PersonDto> getDtoClass(PersonDto personDto) {
-		//TODO
-		return null;
-	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public Iterable<PersonDto> findEmployeeBySalary(int min, int max) {
-		// TODO Auto-generated method stub
-		return null;
+		return employeeRepository.findBySalaryBetween(min, max)
+				.map(p -> modelMapper.map(p, getDtoClass(p)))
+				.collect(Collectors.toList());
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public Iterable<PersonDto> getChildren() {
-		// TODO Auto-generated method stub
-		return null;
+		return childRepository.getByKindergartenNotNull()
+				.map(p -> modelMapper.map(p, getDtoClass(p)))
+				.collect(Collectors.toList());
 	}
 }
