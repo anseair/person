@@ -11,8 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
-import telran.java2022.person.dao.ChildRepository;
-import telran.java2022.person.dao.EmployeeRepository;
 import telran.java2022.person.dao.PersonRepository;
 import telran.java2022.person.dto.AddressDto;
 import telran.java2022.person.dto.ChildDto;
@@ -31,8 +29,6 @@ public class PersonServiceImpl implements PersonService, CommandLineRunner {
 	
 	final PersonRepository personRepository;
 	final ModelMapper modelMapper;
-	final EmployeeRepository employeeRepository;
-	final ChildRepository childRepository;
 
 	@Override
 	@Transactional
@@ -140,7 +136,7 @@ public class PersonServiceImpl implements PersonService, CommandLineRunner {
 	@Override
 	@Transactional(readOnly = true)
 	public Iterable<PersonDto> findEmployeeBySalary(int min, int max) {
-		return employeeRepository.findBySalaryBetween(min, max)
+		return personRepository.findBySalaryBetween(min, max)
 				.map(p -> modelMapper.map(p, getDtoClass(p)))
 				.collect(Collectors.toList());
 	}
@@ -148,7 +144,7 @@ public class PersonServiceImpl implements PersonService, CommandLineRunner {
 	@Override
 	@Transactional(readOnly = true)
 	public Iterable<PersonDto> getChildren() {
-		return childRepository.getByKindergartenNotNull()
+		return personRepository.getByKindergartenNotNull()
 				.map(p -> modelMapper.map(p, getDtoClass(p)))
 				.collect(Collectors.toList());
 	}

@@ -10,10 +10,12 @@ import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.data.repository.query.Param;
 
 import telran.java2022.person.dto.CityPopulationDto;
+import telran.java2022.person.model.Child;
+import telran.java2022.person.model.Employee;
 import telran.java2022.person.model.Person;
 
 
-public interface PersonRepository extends BaseRepository<Person> {
+public interface PersonRepository extends CrudRepository<Person, Integer>{
 	
 	@Query("select p from Person p where p.name=?1")
 	Stream<Person> findByName(String name);
@@ -26,7 +28,9 @@ public interface PersonRepository extends BaseRepository<Person> {
 	@Query("select new telran.java2022.person.dto.CityPopulationDto(p.address.city, count(p)) from Person p group by p.address.city order by count(p) desc")
 	List<CityPopulationDto> getCitiesPopulation();
 	
+	Stream<Child> getByKindergartenNotNull();
 	
+	Stream<Employee> findBySalaryBetween(Integer min, Integer max);
 
 
 }
